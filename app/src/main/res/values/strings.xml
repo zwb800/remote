@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">遥控器</string>
+
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_turnon">开/关</string>
+
+    <string name="action_settings">设置</string>
+    <string-array name="devices">
+        <item>电视1</item>
+        <item>电视2</item>
+        <item>投影1</item>
+        <item>投影2</item>
+    </string-array>
+</resources>
