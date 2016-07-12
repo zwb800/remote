@@ -1,6 +1,8 @@
 package com.mobilejohnny.remote.app;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -8,6 +10,7 @@ import android.support.v4.app.FragmentManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -15,10 +18,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
-import android.widget.ArrayAdapter;
-import android.widget.GridView;
-import android.widget.SimpleAdapter;
-import android.widget.TextView;
+import android.widget.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +28,7 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks {
 
+    private static final String TAG = "Main";
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
@@ -38,9 +39,23 @@ public class MainActivity extends AppCompatActivity
      */
     private CharSequence mTitle;
 
+    static TCP tcp = new TCP();
+    private String server_ip;
+    private int server_port;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        server_ip = PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getString("server", "192.168.1.5");
+        server_port = PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getInt("server_port", 3840);
+
+        connectToServer();
+
         setContentView(R.layout.activity_main);
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
@@ -51,6 +66,23 @@ public class MainActivity extends AppCompatActivity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
+    }
+
+    private void connectToServer() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                boolean result = tcp.connect(server_ip,server_port);
+                if(result)
+                {
+                    Log.i(TAG,"连接成功");
+                }
+                else
+                {
+                    Log.e(TAG,"连接失败");
+                }
+            }
+        }).start();
     }
 
     @Override
@@ -108,6 +140,8 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent = new Intent(this,SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
 
@@ -117,7 +151,7 @@ public class MainActivity extends AppCompatActivity
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class PlaceholderFragment extends Fragment implements AdapterView.OnItemClickListener {
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -154,30 +188,49 @@ public class MainActivity extends AppCompatActivity
             Map<String,Object> map = new HashMap<String, Object>();
             map.put("icon",android.R.drawable.ic_lock_power_off);
             map.put("text","开关");
+            map.put("code","23098");
             data.add(map);
             map = new HashMap<String, Object>();
             map.put("icon",android.R.drawable.ic_lock_silent_mode);
             map.put("text","静音");
+            map.put("code","23098");
             data.add(map);
             map = new HashMap<String, Object>();
             map.put("icon",android.R.drawable.ic_media_play);
             map.put("text","播放");
+            map.put("code","23098");
             data.add(map);
             map = new HashMap<String, Object>();
             map.put("icon",android.R.drawable.ic_media_next);
             map.put("text","下一个");
+            map.put("code","23098");
             data.add(map);
             map = new HashMap<String, Object>();
             map.put("icon",android.R.drawable.ic_media_previous);
             map.put("text","上一个");
+            map.put("code","23098");
             data.add(map);
 
+            grid.setOnItemClickListener(this);
 
             SimpleAdapter adapter = new SimpleAdapter(getContext(),
                     data,R.layout.grid_item,new String[]{"icon","text"},new int[]{R.id.img,R.id.text1} );
 
             grid.setAdapter(adapter);
             return rootView;
+        }
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            Map<String,Object> item = (Map<String, Object>) parent.getAdapter().getItem(position);
+            final String code = item.get("code").toString();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    tcp.send(code.getBytes());
+                    Log.i(TAG,"发送:"+code);
+                }
+            }).start();
         }
 
         @Override
@@ -188,6 +241,8 @@ public class MainActivity extends AppCompatActivity
 
             ((MainActivity) activity).onSectionAttached(sectionNumber);
         }
+
+
     }
 
 }
